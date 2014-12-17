@@ -6,6 +6,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.dcache.xrootd.plugins.ChannelHandlerFactory;
+import org.dcache.xrootd.protocol.messages.ErrorResponse;
 
 import com.google.common.base.Strings;
 import org.jboss.netty.channel.ChannelHandler;
@@ -20,6 +21,7 @@ public class RedirectPluginFactory implements ChannelHandlerFactory
 
     private final String host;
     private final int port;
+    private final boolean useBackwardsCompatiblePlugin;
 
     public RedirectPluginFactory(Properties properties)
     {
@@ -29,8 +31,20 @@ public class RedirectPluginFactory implements ChannelHandlerFactory
         checkArgument(!Strings.isNullOrEmpty(host), "xrootd.redirector.host is a required property");
         checkArgument(!Strings.isNullOrEmpty(port), "xrootd.redirector.port is a required property");
 
+        useBackwardsCompatiblePlugin = !hasErrorGetters();
+
         this.port = Integer.parseInt(port);
         this.host = host;
+    }
+
+    private boolean hasErrorGetters()
+    {
+        try {
+            ErrorResponse.class.getMethod("getErrorNumber");
+            return true;
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
     }
 
     static boolean hasName(String name)
@@ -53,6 +67,6 @@ public class RedirectPluginFactory implements ChannelHandlerFactory
     @Override
     public ChannelHandler createHandler()
     {
-        return new RedirectPlugin(host, port);
+        return useBackwardsCompatiblePlugin ? new CompatibleRedirectPlugin(host, port) : new RedirectPlugin(host, port);
     }
 }

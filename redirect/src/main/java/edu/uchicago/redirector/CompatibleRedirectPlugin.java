@@ -7,19 +7,20 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelDownstreamHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.dcache.xrootd.protocol.XrootdProtocol;
 import org.dcache.xrootd.protocol.messages.ErrorResponse;
 import org.dcache.xrootd.protocol.messages.OpenRequest;
 import org.dcache.xrootd.protocol.messages.RedirectResponse;
 
-public class RedirectPlugin extends SimpleChannelDownstreamHandler
+public class CompatibleRedirectPlugin extends SimpleChannelDownstreamHandler
 {
-	private final static Logger logger = LoggerFactory.getLogger(RedirectPlugin.class);
+	private final static Logger logger = LoggerFactory.getLogger(CompatibleRedirectPlugin.class);
 
     private final String host;
     private final int port;
 
-    public RedirectPlugin(String host, int port)
+    public CompatibleRedirectPlugin(String host, int port)
     {
         this.host = host;
         this.port = port;
@@ -31,7 +32,7 @@ public class RedirectPlugin extends SimpleChannelDownstreamHandler
         if (e.getMessage() instanceof ErrorResponse) {
             ErrorResponse error = (ErrorResponse) e.getMessage();
             logger.debug("redirector intercepted error: {}", error);
-            if (error.getRequest() instanceof OpenRequest && error.getErrorNumber() == XrootdProtocol.kXR_NotFound) {
+            if (error.getRequest() instanceof OpenRequest && error.toString().contains(String.valueOf(XrootdProtocol.kXR_NotFound)) ){
                 logger.debug("redirecting upstream to {}:{}", host, port);
                 ChannelFuture future = e.getChannel().write(new RedirectResponse(error.getRequest(), host, port, "", ""));
                 future.addListener(new ChannelFutureNotifier(e.getFuture()));
