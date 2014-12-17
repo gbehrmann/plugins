@@ -1,5 +1,7 @@
 package edu.uchicago.redirector;
 
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureNotifier;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelDownstreamHandler;
@@ -12,8 +14,8 @@ import org.dcache.xrootd.protocol.messages.RedirectResponse;
 
 public class RedirectPlugin extends SimpleChannelDownstreamHandler
 {
+	private final static Logger logger = LoggerFactory.getLogger(RedirectPlugin.class);
 
-	final static Logger logger = LoggerFactory.getLogger(RedirectPlugin.class);
     private final String host;
     private final int port;
 
@@ -28,12 +30,11 @@ public class RedirectPlugin extends SimpleChannelDownstreamHandler
     {
         if (e.getMessage() instanceof ErrorResponse) {
             ErrorResponse error = (ErrorResponse) e.getMessage();
-            String em=error.toString();
-            logger.debug("redirector intercepted error:"+em);
-            if (error.getRequest() instanceof OpenRequest && em.contains(String.valueOf(XrootdProtocol.kXR_NotFound)) ){
-            	// && error.getErrorNumber() == XrootdProtocol.kXR_NotFound) {
-                logger.debug("redirecting upstream");
-                e.getChannel().write(new RedirectResponse(error.getRequest(), host, port, "", ""));
+            logger.debug("redirector intercepted error: {}", error);
+            if (error.getRequest() instanceof OpenRequest && error.toString().contains(String.valueOf(XrootdProtocol.kXR_NotFound))) {
+                logger.debug("redirecting upstream to {}:{}", host, port);
+                ChannelFuture future = e.getChannel().write(new RedirectResponse(error.getRequest(), host, port, "", ""));
+                future.addListener(new ChannelFutureNotifier(e.getFuture()));
                 return;
             }
         }

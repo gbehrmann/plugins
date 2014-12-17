@@ -10,12 +10,12 @@ import org.slf4j.LoggerFactory;
 
 public class RedirectPluginProvider implements ChannelHandlerProvider {
 
-	final static Logger logger = LoggerFactory.getLogger(RedirectPluginProvider.class);
+	private final static Logger logger = LoggerFactory.getLogger(RedirectPluginProvider.class);
 
     @Override
     public ChannelHandlerFactory createFactory(String plugin, Properties properties)
     {
-    	logger.debug("Created ChannelHandler Factory: "+plugin);
+        logger.debug("Created ChannelHandler Factory: {}", plugin);
     	
         if (RedirectPluginFactory.hasName(plugin)) {
             return new RedirectPluginFactory(properties);

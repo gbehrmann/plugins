@@ -14,9 +14,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 public class RedirectPluginFactory implements ChannelHandlerFactory
 {
-    static final String NAME = "redirector";
+    private static final String NAME = "redirector";
 
-    static final Set<String> ALTERNATIVE_NAMES = new HashSet<String>(Arrays.asList(NAME));
+    private static final Set<String> ALTERNATIVE_NAMES = new HashSet<>(Arrays.asList(NAME));
+
     private final String host;
     private final int port;
 
